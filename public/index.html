@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.js"></script> -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SOCKET</title>
+    <style>
+      .container {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        max-width: 720px;
+      }
+
+      .root {
+        width: 40%;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div class="container">
+      <div id="root1" class="root"></div>
+      <div id="root2" class="root"></div>
+    </div>
+  </body>
+  <script type="module">
+    import {h, render} from 'https://unpkg.com/preact@latest?module'
+    import {
+      useState,
+      useCallback,
+    } from 'https://unpkg.com/preact@latest/hooks/dist/hooks.module.js?module'
+    import htm from 'https://unpkg.com/htm@latest/dist/htm.module.js?module'
+
+    const html = htm.bind(h)
+
+    const mount = root => {
+      const socket = io('http://penguin.termina.linux.test:3001')
+      socket.on('connect', data => {
+        console.log(data)
+      })
+      socket.on('message', function(data) {
+        console.log(data)
+      })
+      socket.on('disconnect', function() {})
+
+      const Example = () => {
+        const [messages, setMessages] = useState([])
+        const connect = useCallback(() => {
+          socket.on('message', data => {
+						setMessages(msgs => [data, ...msgs])
+          })
+        }, [setMessages])
+        return html`
+          <div>
+            <div>Socket component</div>
+            <div><button onClick=${connect}>Connect</button></div>
+            ${messages.map(
+              (message, i) =>
+                html`
+                  <div key="{${root + i}}">Message: ${message}</div>
+                `,
+            )}
+          </div>
+        `
+      }
+
+      render(h(Example), document.querySelector(root))
+    }
+
+    mount('#root1')
+    mount('#root2')
+  </script>
+</html>
