@@ -12,6 +12,7 @@
         width: 100%;
         justify-content: space-between;
         max-width: 720px;
+				height: 300px;
       }
 
       .root {
@@ -25,42 +26,51 @@
       <div id="root1" class="root"></div>
       <div id="root2" class="root"></div>
     </div>
+    <div class="container">
+      <div id="root3" class="root"></div>
+      <div id="root4" class="root"></div>
+    </div>
   </body>
   <script type="module">
     import {h, render} from 'https://unpkg.com/preact@latest?module'
     import {
       useState,
       useCallback,
+      useRef,
+      useEffect,
     } from 'https://unpkg.com/preact@latest/hooks/dist/hooks.module.js?module'
     import htm from 'https://unpkg.com/htm@latest/dist/htm.module.js?module'
 
     const html = htm.bind(h)
 
     const mount = root => {
-      const socket = io('http://penguin.termina.linux.test:3001')
-      socket.on('connect', data => {
-        console.log(data)
-      })
-      socket.on('message', function(data) {
-        console.log(data)
-      })
-      socket.on('disconnect', function() {})
-
+      const socket = io('http://penguin.termina.linux.test:3000')
       const Example = () => {
         const [messages, setMessages] = useState([])
-        const connect = useCallback(() => {
-          socket.on('message', data => {
-						setMessages(msgs => [data, ...msgs])
+        useEffect(() => {
+          socket.on('connect', () => {
+            console.log('connected')
           })
-        }, [setMessages])
+
+          socket.on('message', data => {
+            console.log('Recieving message:', data)
+            setMessages(msgs => [data, ...msgs.slice(0,9)])
+          })
+        }, [])
+
+        const sendMessage = useCallback(() => {
+          console.log('sending a message...')
+          socket.emit('message', 'sending a message from ' + root)
+        }, [])
+
         return html`
           <div>
             <div>Socket component</div>
-            <div><button onClick=${connect}>Connect</button></div>
+            <div><button onClick=${sendMessage}>Send message</button></div>
             ${messages.map(
               (message, i) =>
                 html`
-                  <div key="{${root + i}}">Message: ${message}</div>
+                  <div key=${root + i}>Message: ${message}</div>
                 `,
             )}
           </div>
@@ -72,5 +82,7 @@
 
     mount('#root1')
     mount('#root2')
+    mount('#root3')
+    mount('#root4')
   </script>
 </html>

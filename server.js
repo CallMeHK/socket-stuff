@@ -1,8 +1,13 @@
-const express = require('express')
+var express = require('express')
 const app = express()
-const port = 3000
+var server = require('http').Server(app)
+var io = require('socket.io')(server)
+const {onConnection} = require('./socket')
 
+server.listen(3000)
 
 app.use('/', express.static('public'))
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+io.on('connection', onConnection)
+
+console.log('server started on port 3000')
